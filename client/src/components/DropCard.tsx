@@ -1,16 +1,25 @@
+import { useState, useTransition } from "react";
 import { type Drop } from "../types";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
+import { Spinner } from "./ui/spinner";
 
 interface DropCardProps {
     drop: Drop;
-    onReserve: (id: string) => void;
+    onReserve: (id: string) => void | Promise<void>;
 }
 
 export function DropCard({ drop, onReserve }: DropCardProps) {
+    const [isPending, startTransition] = useTransition();
     const isLowStock = drop.availableStock <= 5;
     const isOutOfStock = drop.availableStock === 0;
+
+    const handleReserve = () => {
+        startTransition(async () => {
+            await onReserve(drop.id);
+        });
+    };
 
     return (
         <Card className="group overflow-hidden transition-all hover:shadow-lg py-0 gap-2">
@@ -82,12 +91,21 @@ export function DropCard({ drop, onReserve }: DropCardProps) {
                     </div>
                 )}
                 <Button
-                    onClick={() => onReserve(drop.id)}
-                    disabled={isOutOfStock}
+                    onClick={handleReserve}
+                    disabled={isOutOfStock || isPending}
                     className="w-full mt-4 text-base cursor-pointer"
                     size="default"
                 >
-                    {isOutOfStock ? "Sold Out" : "Reserve Now"}
+                    {isPending ? (
+                        <span className="flex items-center gap-2">
+                            <Spinner />
+                            Processing...
+                        </span>
+                    ) : isOutOfStock ? (
+                        "Sold Out"
+                    ) : (
+                        "Reserve Now"
+                    )}
                 </Button>
             </CardContent>
         </Card>

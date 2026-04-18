@@ -105,7 +105,9 @@ export const reserve = async (
             });
 
             // No rows updated means no stock available
-            if (!updated.count) throw new Error("Sold out");
+            if (!updated.count) {
+                res.status(409).json({ message: "Sold out" });
+            }
 
             // Create reservation with 60 second expiry
             return tx.reservation.create({
@@ -122,7 +124,9 @@ export const reserve = async (
         res.json(reservation);
     } catch (err) {
         console.log(`[reserve] Failed: ${(err as Error).message}`);
-        res.status(409).json({ message: "Sold out" });
+        res.status(500).json({
+            message: "Some internal error occurred. Please try again later.",
+        });
     }
 };
 

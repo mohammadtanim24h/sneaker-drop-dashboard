@@ -22,7 +22,8 @@ async function main() {
         data: {
             name: "Air Jordan 1",
             brand: "Nike",
-            imageUrl: "https://via.placeholder.com/150",
+            imageUrl:
+                "https://static.nike.com/a/images/t_web_pw_592_v2/f_auto/u_9ddf04c7-2a9a-4d76-add1-d15af8f0263d,c_scale,fl_relative,w_1.0,h_1.0,fl_layer_apply/b44b7252-37f0-4a55-9b13-f0938e4d6b74/WMNS+AIR+FORCE+1+%2707.png",
         },
     });
 
