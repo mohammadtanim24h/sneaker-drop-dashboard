@@ -6,18 +6,38 @@ import { io } from "../server.js";
  * Get all active drops (status: LIVE)
  */
 export const getActiveDrops = async (_req: Request, res: Response) => {
+    console.log("[getActiveDrops] Fetching all LIVE drops");
+
     const drops = await prisma.drop.findMany({
         where: { status: "LIVE" },
-        include: {
-            sneaker: true,
+        select: {
+            id: true,
+            availableStock: true,
+            soldStock: true,
+            retailPrice: true,
+            sneaker: {
+                select: {
+                    name: true,
+                    brand: true,
+                    imageUrl: true,
+                },
+            },
             purchases: {
                 take: 3,
                 orderBy: { createdAt: "desc" },
-                include: { user: true },
+                select: {
+                    id: true,
+                    user: {
+                        select: {
+                            username: true,
+                        },
+                    },
+                },
             },
         },
     });
 
+    console.log(`[getActiveDrops] Found ${drops.length} active drops`);
     res.json(drops);
 };
 
@@ -32,8 +52,12 @@ export const createDrop = async (req: Request, res: Response) => {
         price: number;
     };
 
+    console.log(`[createDrop] Creating drop for sneaker: ${name} (${brand})`);
+
+    // Create sneaker record first
     const sneaker = await prisma.sneaker.create({ data: { name, brand } });
 
+    // Create the drop with initial stock values
     const drop = await prisma.drop.create({
         data: {
             sneakerId: sneaker.id,
@@ -45,11 +69,12 @@ export const createDrop = async (req: Request, res: Response) => {
         },
     });
 
+    console.log(`[createDrop] Drop created successfully with ID: ${drop.id}`);
     res.json(drop);
 };
 
 /**
- * Reserve a drop
+ * Reserve a drop (holds stock for 60 seconds)
  */
 export const reserve = async (
     req: Request<
@@ -64,8 +89,13 @@ export const reserve = async (
     const { dropId } = req.params;
     const { userId } = req.body;
 
+    console.log(
+        `[reserve] User ${userId} attempting to reserve drop ${dropId}`,
+    );
+
     try {
         const reservation = await prisma.$transaction(async (tx) => {
+            // Decrement available stock, increment reserved stock
             const updated = await tx.drop.updateMany({
                 where: { id: dropId, availableStock: { gt: 0 } },
                 data: {
@@ -74,8 +104,10 @@ export const reserve = async (
                 },
             });
 
+            // No rows updated means no stock available
             if (!updated.count) throw new Error("Sold out");
 
+            // Create reservation with 60 second expiry
             return tx.reservation.create({
                 data: {
                     dropId,
@@ -85,9 +117,11 @@ export const reserve = async (
             });
         });
 
+        console.log(`[reserve] Reservation created: ${reservation.id}`);
         io.emit("drop:update");
         res.json(reservation);
-    } catch {
+    } catch (err) {
+        console.log(`[reserve] Failed: ${(err as Error).message}`);
         res.status(409).json({ message: "Sold out" });
     }
 };
@@ -108,19 +142,26 @@ export const purchase = async (
     const { reservationId } = req.params;
     const { userId } = req.body;
 
+    console.log(
+        `[purchase] User ${userId} purchasing with reservation ${reservationId}`,
+    );
+
     try {
         const purchase = await prisma.$transaction(async (tx) => {
+            // Find valid active reservation for this user
             const reservation = await tx.reservation.findFirst({
                 where: { id: reservationId, userId, status: "ACTIVE" },
             });
 
             if (!reservation) throw new Error("Invalid reservation");
 
+            // Mark reservation as completed
             await tx.reservation.update({
                 where: { id: reservationId },
                 data: { status: "COMPLETED" },
             });
 
+            // Move stock from reserved to sold
             await tx.drop.update({
                 where: { id: reservation.dropId },
                 data: {
@@ -129,6 +170,7 @@ export const purchase = async (
                 },
             });
 
+            // Create purchase record
             return tx.purchase.create({
                 data: {
                     dropId: reservation.dropId,
@@ -138,9 +180,11 @@ export const purchase = async (
             });
         });
 
+        console.log(`[purchase] Purchase completed: ${purchase.id}`);
         io.emit("drop:update");
         res.json(purchase);
-    } catch {
+    } catch (err) {
+        console.log(`[purchase] Failed: ${(err as Error).message}`);
         res.status(409).json({ message: "Purchase failed" });
     }
 };

@@ -13,7 +13,7 @@ export async function reserveDrop(dropId: string) {
         {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ userId: "demo-user" }),
+            body: JSON.stringify({ userId: "cmo48ykju0000youxkf3c9pzz" }),
         },
     );
 }

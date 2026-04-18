@@ -58,6 +58,7 @@ model Drop {
   updatedAt      DateTime      @updatedAt
 
   @@index([status, releaseAt])
+  @@index([availableStock])  // Optimizes stock availability checks in reserve
 }
 
 model Reservation {
@@ -70,6 +71,9 @@ model Reservation {
   expiresAt DateTime
   createdAt DateTime          @default(now())
   purchase  Purchase?
+
+  @@index([dropId, status])     // Optimizes purchase reservation lookup
+  @@index([status, expiresAt])  // Optimizes expired reservation cleanup queries
 }
 
 model Purchase {
@@ -82,5 +86,6 @@ model Purchase {
   reservation   Reservation @relation(fields: [reservationId], references: [id])
   createdAt     DateTime    @default(now())
 
-  @@index([dropId, createdAt])
+  @@index([dropId, createdAt])  // Optimizes recent purchases query in getActiveDrops
+  @@index([userId])             // Optimizes user purchase history queries
 }
