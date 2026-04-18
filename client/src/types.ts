@@ -21,3 +21,10 @@ export interface Drop {
     sneaker: Sneaker;
     purchases: Purchase[];
 }
+
+export interface DropUpdate {
+    id: string;
+    availableStock?: number;
+    soldStock?: number;
+    purchases?: Purchase[];
+}

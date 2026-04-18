@@ -120,7 +120,17 @@ export const reserve = async (
         });
 
         console.log(`[reserve] Reservation created: ${reservation.id}`);
-        io.emit("drop:update");
+
+        // Fetch only the updated stock count and emit via websocket
+        const drop = await prisma.drop.findUnique({
+            where: { id: dropId },
+            select: { id: true, availableStock: true },
+        });
+
+        if (drop) {
+            io.emit("drop:update", drop);
+        }
+
         res.json(reservation);
     } catch (err) {
         console.log(`[reserve] Failed: ${(err as Error).message}`);
@@ -175,17 +185,43 @@ export const purchase = async (
             });
 
             // Create purchase record
-            return tx.purchase.create({
+            const createdPurchase = await tx.purchase.create({
                 data: {
                     dropId: reservation.dropId,
                     userId,
                     reservationId,
                 },
             });
+
+            // Fetch only updated fields and emit via websocket
+            const updatedDrop = await tx.drop.findUnique({
+                where: { id: reservation.dropId },
+                select: {
+                    id: true,
+                    soldStock: true,
+                    purchases: {
+                        take: 3,
+                        orderBy: { createdAt: "desc" },
+                        select: {
+                            id: true,
+                            user: {
+                                select: {
+                                    username: true,
+                                },
+                            },
+                        },
+                    },
+                },
+            });
+
+            if (updatedDrop) {
+                io.emit("drop:update", updatedDrop);
+            }
+
+            return createdPurchase;
         });
 
         console.log(`[purchase] Purchase completed: ${purchase.id}`);
-        io.emit("drop:update");
         res.json(purchase);
     } catch (err) {
         console.log(`[purchase] Failed: ${(err as Error).message}`);

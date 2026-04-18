@@ -15,11 +15,18 @@ import {
     SelectValue,
 } from "./components/ui/select";
 import { Button } from "./components/ui/button";
-import { fetchDrops, fetchUsers, reserveDrop, getUserIdFromStorage, saveUserId } from "./api";
+import {
+    fetchDrops,
+    fetchUsers,
+    reserveDrop,
+    getUserIdFromStorage,
+    saveUserId,
+} from "./api";
 import { socket } from "./socket";
 import { DropCard } from "./components/DropCard";
 import { Spinner } from "./components/ui/spinner";
 import { toast } from "sonner";
+import { type Drop, type DropUpdate } from "./types";
 
 export default function App() {
     const qc = useQueryClient();
@@ -44,8 +51,25 @@ export default function App() {
     }, [storedUserId]);
 
     useEffect(() => {
-        socket.on("drop:update", () => {
-            qc.invalidateQueries({ queryKey: ["drops"] });
+        socket.on("drop:update", (update: DropUpdate) => {
+            qc.setQueryData<Drop[]>(["drops"], (oldDrops = []) => {
+                return oldDrops.map((drop) =>
+                    drop.id === update.id
+                        ? {
+                              ...drop,
+                              ...(update.availableStock !== undefined && {
+                                  availableStock: update.availableStock,
+                              }),
+                              ...(update.soldStock !== undefined && {
+                                  soldStock: update.soldStock,
+                              }),
+                              ...(update.purchases !== undefined && {
+                                  purchases: update.purchases,
+                              }),
+                          }
+                        : drop,
+                );
+            });
         });
 
         return () => {
@@ -76,7 +100,8 @@ export default function App() {
                     <DialogHeader>
                         <DialogTitle>Select Your Profile</DialogTitle>
                         <DialogDescription>
-                            Choose your user profile to continue with reservations.
+                            Choose your user profile to continue with
+                            reservations.
                         </DialogDescription>
                     </DialogHeader>
                     <div className="flex flex-col gap-4 py-4">
