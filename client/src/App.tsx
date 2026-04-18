@@ -1,6 +1,21 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { fetchDrops, reserveDrop } from "./api";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+} from "./components/ui/dialog";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "./components/ui/select";
+import { Button } from "./components/ui/button";
+import { fetchDrops, fetchUsers, reserveDrop, getUserIdFromStorage, saveUserId } from "./api";
 import { socket } from "./socket";
 import { DropCard } from "./components/DropCard";
 import { Spinner } from "./components/ui/spinner";
@@ -8,11 +23,25 @@ import { toast } from "sonner";
 
 export default function App() {
     const qc = useQueryClient();
+    const [selectedUserId, setSelectedUserId] = useState<string>("");
+    const [showUserDialog, setShowUserDialog] = useState(false);
+    const storedUserId = getUserIdFromStorage();
 
     const { data = [], isLoading } = useQuery({
         queryKey: ["drops"],
         queryFn: fetchDrops,
     });
+
+    const { data: users = [], isLoading: usersLoading } = useQuery({
+        queryKey: ["users"],
+        queryFn: fetchUsers,
+    });
+
+    useEffect(() => {
+        if (!storedUserId) {
+            setShowUserDialog(true);
+        }
+    }, [storedUserId]);
 
     useEffect(() => {
         socket.on("drop:update", () => {
@@ -33,24 +62,68 @@ export default function App() {
         }
     };
 
+    const handleUserSelect = () => {
+        if (selectedUserId) {
+            saveUserId(selectedUserId);
+            setShowUserDialog(false);
+        }
+    };
+
     return (
-        <div className="max-w-7xl mx-auto p-5">
-            <h1 className="text-4xl mb-3">Sneaker Drops</h1>
-            {isLoading ? (
-                <div className="flex items-center justify-center py-20">
-                    <Spinner className="size-8" />
-                </div>
-            ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
-                    {data.map((drop) => (
-                        <DropCard
-                            key={drop.id}
-                            drop={drop}
-                            onReserve={handleReserve}
-                        />
-                    ))}
-                </div>
-            )}
-        </div>
+        <>
+            <Dialog open={showUserDialog} onOpenChange={setShowUserDialog}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Select Your Profile</DialogTitle>
+                        <DialogDescription>
+                            Choose your user profile to continue with reservations.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="flex flex-col gap-4 py-4">
+                        <Select
+                            value={selectedUserId}
+                            onValueChange={setSelectedUserId}
+                            disabled={usersLoading}
+                        >
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select a user..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {users.map((user) => (
+                                    <SelectItem key={user.id} value={user.id}>
+                                        {user.username}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        <Button
+                            onClick={handleUserSelect}
+                            disabled={!selectedUserId || usersLoading}
+                        >
+                            Proceed
+                        </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            <div className="max-w-7xl mx-auto p-5">
+                <h1 className="text-4xl mb-3">Sneaker Drops</h1>
+                {isLoading ? (
+                    <div className="flex items-center justify-center py-20">
+                        <Spinner className="size-8" />
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
+                        {data.map((drop) => (
+                            <DropCard
+                                key={drop.id}
+                                drop={drop}
+                                onReserve={handleReserve}
+                            />
+                        ))}
+                    </div>
+                )}
+            </div>
+        </>
     );
 }
