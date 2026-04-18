@@ -11,3 +11,35 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+enum DropStatus {
+  UPCOMING
+  LIVE
+  ENDED
+}
+
+model Sneaker {
+  id        String   @id @default(cuid())
+  name      String
+  brand     String
+  imageUrl  String?
+  createdAt DateTime @default(now())
+  drops     Drop[]
+}
+
+model Drop {
+  id             String     @id @default(cuid())
+  sneakerId      String
+  sneaker        Sneaker    @relation(fields: [sneakerId], references: [id])
+  releaseAt      DateTime
+  retailPrice    Float
+  totalStock     Int
+  availableStock Int
+  reservedStock  Int        @default(0)
+  soldStock      Int        @default(0)
+  status         DropStatus @default(UPCOMING)
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  @@index([status, releaseAt])
+}

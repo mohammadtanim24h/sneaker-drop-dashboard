@@ -1,47 +1,11 @@
 {
   "compilerOptions": {
-    // File Layout
-    "rootDir": ".",
-    "outDir": "./dist",
-
-    // Environment Settings
-    "module": "nodenext",
     "target": "ES2022",
-    "moduleResolution": "nodenext",
-    "lib": ["ES2022"],
-    "types": ["node"],
-
-    // Emit
-    "sourceMap": true,
-    "declaration": true,
-    "declarationMap": true,
-
-    // Interop Constraints
+    "module": "Node16",
+    "moduleResolution": "node16",
+    "outDir": "dist",
     "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-    "forceConsistentCasingInFileNames": true,
-    "isolatedModules": true,
-    "verbatimModuleSyntax": true,
-    "noEmit": false,
-
-    // Language and Environment
-    "resolveJsonModule": true,
-
-    // Type Checking
     "strict": true,
-    "noUncheckedIndexedAccess": true,
-    "exactOptionalPropertyTypes": true,
-    "skipLibCheck": true,
-
-    // Completeness
-    "noImplicitReturns": false,
-    "noUnusedLocals": false,
-    "noUnusedParameters": false,
-    "noFallthroughCasesInSwitch": false,
-
-    // Module Detection
-    "moduleDetection": "force"
-  },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist"]
+    "skipLibCheck": true
+  }
 }

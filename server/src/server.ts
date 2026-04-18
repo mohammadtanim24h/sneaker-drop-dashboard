@@ -3,6 +3,7 @@ import express from "express";
 import { createServer } from "http";
 import { Server } from "socket.io";
 import cors from "cors";
+import { dropRouter } from "./routes/drop.routes.js";
 
 const PORT = process.env.PORT;
 const app = express();
@@ -14,6 +15,8 @@ export const io = new Server(httpServer, {
 
 app.use(cors());
 app.use(express.json());
+
+app.use("/api/drops", dropRouter);
 
 io.on("connection", (socket) => {
     socket.join("drops");
