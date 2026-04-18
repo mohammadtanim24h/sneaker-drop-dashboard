@@ -16,6 +16,7 @@ export interface Sneaker {
 export interface Drop {
     id: string;
     availableStock: number;
+    soldStock: number;
     sneaker: Sneaker;
     purchases: Purchase[];
 }

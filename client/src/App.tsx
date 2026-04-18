@@ -23,11 +23,17 @@ export default function App() {
     }, [qc]);
 
     return (
-        <div>
-            <h1>Sneaker Drops</h1>
-            {data.map((drop) => (
-                <DropCard key={drop.id} drop={drop} onReserve={reserveDrop} />
-            ))}
+        <div className="max-w-7xl mx-auto p-5">
+            <h1 className="text-4xl mb-3">Sneaker Drops</h1>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
+                {data.map((drop) => (
+                    <DropCard
+                        key={drop.id}
+                        drop={drop}
+                        onReserve={reserveDrop}
+                    />
+                ))}
+            </div>
         </div>
     );
 }
