@@ -18,6 +18,20 @@ enum DropStatus {
   ENDED
 }
 
+enum ReservationStatus {
+  ACTIVE
+  EXPIRED
+  COMPLETED
+}
+
+model User {
+  id           String        @id @default(cuid())
+  username     String        @unique
+  reservations Reservation[]
+  purchases    Purchase[]
+  createdAt    DateTime      @default(now())
+}
+
 model Sneaker {
   id        String   @id @default(cuid())
   name      String
@@ -28,18 +42,45 @@ model Sneaker {
 }
 
 model Drop {
-  id             String     @id @default(cuid())
+  id             String        @id @default(cuid())
   sneakerId      String
-  sneaker        Sneaker    @relation(fields: [sneakerId], references: [id])
+  sneaker        Sneaker       @relation(fields: [sneakerId], references: [id])
   releaseAt      DateTime
   retailPrice    Float
   totalStock     Int
   availableStock Int
-  reservedStock  Int        @default(0)
-  soldStock      Int        @default(0)
-  status         DropStatus @default(UPCOMING)
-  createdAt      DateTime   @default(now())
-  updatedAt      DateTime   @updatedAt
+  reservedStock  Int           @default(0)
+  soldStock      Int           @default(0)
+  status         DropStatus    @default(UPCOMING)
+  reservations   Reservation[]
+  purchases      Purchase[]
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
 
   @@index([status, releaseAt])
+}
+
+model Reservation {
+  id        String            @id @default(cuid())
+  dropId    String
+  drop      Drop              @relation(fields: [dropId], references: [id])
+  userId    String
+  user      User              @relation(fields: [userId], references: [id])
+  status    ReservationStatus @default(ACTIVE)
+  expiresAt DateTime
+  createdAt DateTime          @default(now())
+  purchase  Purchase?
+}
+
+model Purchase {
+  id            String      @id @default(cuid())
+  dropId        String
+  drop          Drop        @relation(fields: [dropId], references: [id])
+  userId        String
+  user          User        @relation(fields: [userId], references: [id])
+  reservationId String      @unique
+  reservation   Reservation @relation(fields: [reservationId], references: [id])
+  createdAt     DateTime    @default(now())
+
+  @@index([dropId, createdAt])
 }
