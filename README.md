@@ -127,6 +127,79 @@ http://localhost:5173
 
 ---
 
+# 📡 API Reference
+
+## `POST /api/drops` - Create a New Drop
+
+Creates a new sneaker drop with support for existing or new sneakers.
+
+### Request Options
+
+**Option 1: Create drop with existing sneaker**
+
+```json
+{
+    "sneakerId": "sneaker_id_here",
+    "stock": 100,
+    "price": 250,
+    "releaseAt": "2026-04-19 11:43:00+00"
+}
+```
+
+**Option 2: Create drop with new sneaker (inline)**
+
+```json
+{
+    "name": "Air Jordan 1 High",
+    "brand": "Nike",
+    "imageUrl": "https://example.com/image.jpg",
+    "stock": 100,
+    "price": 250,
+    "releaseAt": "2026-04-19 11:43:00+00"
+}
+```
+
+### Fields
+
+| Field       | Type        | Required | Description                              |
+| ----------- | ----------- | -------- | ---------------------------------------- |
+| `sneakerId` | string      | No\*     | ID of existing sneaker                   |
+| `name`      | string      | No\*     | Sneaker name (required if no sneakerId)  |
+| `brand`     | string      | No\*     | Sneaker brand (required if no sneakerId) |
+| `imageUrl`  | string      | No       | Sneaker image URL                        |
+| `stock`     | number      | **Yes**  | Total stock quantity (must be > 0)       |
+| `price`     | number      | **Yes**  | Retail price (must be > 0)               |
+| `releaseAt` | string/Date | No       | Release time (defaults to now)           |
+
+### Behavior
+
+- **Automatic status assignment**:
+    - `releaseAt > now` → status: `UPCOMING`
+    - `releaseAt <= now` → status: `LIVE`
+- **Validation**: Returns 400 if stock/price ≤ 0, or 404 if sneakerId not found
+- **Response**: Returns created drop with sneaker details
+
+### Example Response
+
+```json
+{
+    "id": "drop_id",
+    "sneakerId": "sneaker_id",
+    "totalStock": 100,
+    "availableStock": 100,
+    "retailPrice": 250,
+    "releaseAt": "2026-04-20T10:00:00.000Z",
+    "status": "UPCOMING",
+    "sneaker": {
+        "id": "sneaker_id",
+        "name": "Air Jordan 1 High",
+        "brand": "Nike"
+    }
+}
+```
+
+---
+
 # 🧠 Architecture Decisions
 
 ## 1. 60-Second Expiration Logic
