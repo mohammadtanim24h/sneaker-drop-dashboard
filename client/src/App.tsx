@@ -51,6 +51,7 @@ export default function App() {
     }, [storedUserId]);
 
     useEffect(() => {
+        // Listen for single drop updates (e.g. reservation or purchase)
         socket.on("drop:update", (update: DropUpdate) => {
             qc.setQueryData<Drop[]>(["drops"], (oldDrops = []) => {
                 return oldDrops.map((drop) =>
@@ -70,6 +71,18 @@ export default function App() {
                                   reservations: update.reservations,
                               }),
                           }
+                        : drop,
+                );
+            });
+        });
+
+        // Listen for bulk drop updates (e.g. after reservation expiry job)
+        socket.on("drops:update", (updates: DropUpdate[]) => {
+            qc.setQueryData<Drop[]>(["drops"], (oldDrops = []) => {
+                const updateMap = new Map(updates.map((u) => [u.id, u]));
+                return oldDrops.map((drop) =>
+                    updateMap.has(drop.id)
+                        ? { ...drop, ...updateMap.get(drop.id)! }
                         : drop,
                 );
             });
