@@ -186,6 +186,8 @@ export default function App() {
                     <div className="flex items-center justify-center py-20">
                         <Spinner className="size-8" />
                     </div>
+                ) : data.length === 0 ? (
+                    <p className="text-lg">No drops available.</p>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
                         {data.map((drop) => (
