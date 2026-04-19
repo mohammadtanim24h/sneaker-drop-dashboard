@@ -13,10 +13,10 @@ const app = express();
 const httpServer = createServer(app);
 
 export const io = new Server(httpServer, {
-    cors: { origin: "*" },
+    cors: { origin: process.env.CLIENT_URL },
 });
 
-app.use(cors());
+app.use(cors({ origin: process.env.CLIENT_URL }));
 app.use(express.json());
 
 app.use("/api/drops", dropRouter);
