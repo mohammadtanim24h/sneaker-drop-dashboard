@@ -79,8 +79,12 @@ export default function App() {
 
     const handleReserve = async (dropId: string) => {
         try {
-            await reserveDrop(dropId);
-            toast.success("Sneaker reserved successfully!");
+            const resp = await reserveDrop(dropId);
+            if (!resp.ok) {
+                toast.error("Failed to reserve sneaker. Please try again.");
+            } else {
+                toast.success("Sneaker reserved successfully!");
+            }
         } catch {
             toast.error("Failed to reserve sneaker. Please try again.");
         }
@@ -95,8 +99,8 @@ export default function App() {
 
     return (
         <>
-            <Dialog open={showUserDialog} onOpenChange={setShowUserDialog}>
-                <DialogContent className="sm:max-w-md">
+            <Dialog open={showUserDialog}>
+                <DialogContent className="sm:max-w-md" showCloseButton={false}>
                     <DialogHeader>
                         <DialogTitle>Select Your Profile</DialogTitle>
                         <DialogDescription>
@@ -124,6 +128,7 @@ export default function App() {
                         <Button
                             onClick={handleUserSelect}
                             disabled={!selectedUserId || usersLoading}
+                            className="text-base cursor-pointer"
                         >
                             Proceed
                         </Button>

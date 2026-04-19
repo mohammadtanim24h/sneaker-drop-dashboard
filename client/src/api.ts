@@ -15,7 +15,7 @@ export async function fetchUsers(): Promise<User[]> {
 const getUserId = () => localStorage.getItem("userId") ?? "";
 
 export async function reserveDrop(dropId: string) {
-    await fetch(`${API_BASE}/drops/${dropId}/reserve`, {
+    return await fetch(`${API_BASE}/drops/${dropId}/reserve`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId: getUserId() }),
