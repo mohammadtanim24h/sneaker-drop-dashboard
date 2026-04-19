@@ -66,6 +66,9 @@ export default function App() {
                               ...(update.purchases !== undefined && {
                                   purchases: update.purchases,
                               }),
+                              ...(update.reservations !== undefined && {
+                                  reservations: update.reservations,
+                              }),
                           }
                         : drop,
                 );
@@ -77,10 +80,14 @@ export default function App() {
         };
     }, [qc]);
 
+    const handlePurchase = async (dropId: string) => {
+        toast.info("Purchase flow coming soon!");
+    };
+
     const handleReserve = async (dropId: string) => {
         try {
             const resp = await reserveDrop(dropId);
-            if (!resp.ok) {
+            if (resp.status !== 200) {
                 toast.error("Failed to reserve sneaker. Please try again.");
             } else {
                 toast.success("Sneaker reserved successfully!");
@@ -149,6 +156,8 @@ export default function App() {
                                 key={drop.id}
                                 drop={drop}
                                 onReserve={handleReserve}
+                                onPurchase={handlePurchase}
+                                currentUserId={storedUserId}
                             />
                         ))}
                     </div>

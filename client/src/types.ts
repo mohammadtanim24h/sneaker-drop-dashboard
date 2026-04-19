@@ -20,6 +20,7 @@ export interface Drop {
     soldStock: number;
     sneaker: Sneaker;
     purchases: Purchase[];
+    reservations: Reservation[];
 }
 
 export interface DropUpdate {
@@ -27,4 +28,10 @@ export interface DropUpdate {
     availableStock?: number;
     soldStock?: number;
     purchases?: Purchase[];
+    reservations?: Reservation[];
+}
+
+export interface Reservation {
+    id: string;
+    user: User;
 }

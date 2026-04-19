@@ -8,16 +8,25 @@ import { Spinner } from "./ui/spinner";
 interface DropCardProps {
     drop: Drop;
     onReserve: (id: string) => void | Promise<void>;
+    onPurchase: (id: string) => void | Promise<void>;
+    currentUserId: string | null;
 }
 
-export function DropCard({ drop, onReserve }: DropCardProps) {
+export function DropCard({ drop, onReserve, onPurchase, currentUserId }: DropCardProps) {
     const [isPending, startTransition] = useTransition();
     const isLowStock = drop.availableStock <= 5;
     const isOutOfStock = drop.availableStock === 0;
+    const hasReserved = currentUserId && (drop.reservations ?? []).some((r) => r.user.id === currentUserId);
 
     const handleReserve = () => {
         startTransition(async () => {
             await onReserve(drop.id);
+        });
+    };
+
+    const handlePurchase = () => {
+        startTransition(async () => {
+            await onPurchase(drop.id);
         });
     };
 
@@ -91,7 +100,7 @@ export function DropCard({ drop, onReserve }: DropCardProps) {
                     </div>
                 )}
                 <Button
-                    onClick={handleReserve}
+                    onClick={hasReserved ? handlePurchase : handleReserve}
                     disabled={isOutOfStock || isPending}
                     className="w-full mt-4 text-base cursor-pointer"
                     size="default"
@@ -103,6 +112,8 @@ export function DropCard({ drop, onReserve }: DropCardProps) {
                         </span>
                     ) : isOutOfStock ? (
                         "Sold Out"
+                    ) : hasReserved ? (
+                        "Purchase"
                     ) : (
                         "Reserve Now"
                     )}

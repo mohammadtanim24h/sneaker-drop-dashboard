@@ -29,6 +29,19 @@ export const getActiveDrops = async (_req: Request, res: Response) => {
                     id: true,
                     user: {
                         select: {
+                            id: true,
+                            username: true,
+                        },
+                    },
+                },
+            },
+            reservations: {
+                where: { status: "ACTIVE" },
+                select: {
+                    id: true,
+                    user: {
+                        select: {
+                            id: true,
                             username: true,
                         },
                     },
@@ -121,10 +134,25 @@ export const reserve = async (
 
         console.log(`[reserve] Reservation created: ${reservation.id}`);
 
-        // Fetch only the updated stock count and emit via websocket
+        // Fetch updated stock and reservations, emit via websocket
         const drop = await prisma.drop.findUnique({
             where: { id: dropId },
-            select: { id: true, availableStock: true },
+            select: {
+                id: true,
+                availableStock: true,
+                reservations: {
+                    where: { status: "ACTIVE" },
+                    select: {
+                        id: true,
+                        user: {
+                            select: {
+                                id: true,
+                                username: true,
+                            },
+                        },
+                    },
+                },
+            },
         });
 
         if (drop) {
