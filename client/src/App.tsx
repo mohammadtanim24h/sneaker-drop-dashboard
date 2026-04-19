@@ -19,6 +19,7 @@ import {
     fetchDrops,
     fetchUsers,
     reserveDrop,
+    purchaseDrop,
     getUserIdFromStorage,
     saveUserId,
 } from "./api";
@@ -94,7 +95,30 @@ export default function App() {
     }, [qc]);
 
     const handlePurchase = async (dropId: string) => {
-        toast.info("Purchase flow coming soon!");
+        const drop = data.find((d) => d.id === dropId);
+        if (!drop) {
+            toast.error("Drop not found");
+            return;
+        }
+
+        const reservation = drop.reservations.find(
+            (r) => r.user.id === storedUserId,
+        );
+        if (!reservation) {
+            toast.error("No active reservation found");
+            return;
+        }
+
+        try {
+            const resp = await purchaseDrop(reservation.id);
+            if (resp.status !== 200) {
+                toast.error("Failed to purchase sneaker. Please try again.");
+            } else {
+                toast.success("Sneaker purchased successfully!");
+            }
+        } catch {
+            toast.error("Failed to purchase sneaker. Please try again.");
+        }
     };
 
     const handleReserve = async (dropId: string) => {

@@ -239,6 +239,18 @@ export const purchase = async (
                             },
                         },
                     },
+                    reservations: {
+                        where: { status: "ACTIVE" },
+                        select: {
+                            id: true,
+                            user: {
+                                select: {
+                                    id: true,
+                                    username: true,
+                                },
+                            },
+                        },
+                    },
                 },
             });
 

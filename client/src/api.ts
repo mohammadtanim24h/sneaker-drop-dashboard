@@ -22,6 +22,14 @@ export async function reserveDrop(dropId: string) {
     });
 }
 
+export async function purchaseDrop(reservationId: string) {
+    return await fetch(`${API_BASE}/drops/purchase/${reservationId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: getUserId() }),
+    });
+}
+
 export const saveUserId = (userId: string) => {
     localStorage.setItem("userId", userId);
 };
