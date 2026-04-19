@@ -59,6 +59,7 @@ model Drop {
 
   @@index([status, releaseAt])
   @@index([availableStock])  // Optimizes stock availability checks in reserve
+  @@index([status])          // Optimizes getActiveDrops query
 }
 
 model Reservation {
