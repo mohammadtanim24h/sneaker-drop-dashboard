@@ -189,7 +189,7 @@ export default function App() {
                 ) : data.length === 0 ? (
                     <p className="text-lg">No drops available.</p>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                         {data.map((drop) => (
                             <DropCard
                                 key={drop.id}

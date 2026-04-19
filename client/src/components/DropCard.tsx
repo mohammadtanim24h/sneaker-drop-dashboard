@@ -24,6 +24,7 @@ export function DropCard({
     const hasReserved =
         currentUserId &&
         (drop.reservations ?? []).some((r) => r.user.id === currentUserId);
+    const showSoldOut = isOutOfStock && !hasReserved;
 
     const handleReserve = () => {
         startTransition(async () => {
@@ -50,7 +51,7 @@ export function DropCard({
                         alt={drop.sneaker.name}
                         className="h-full w-full object-cover transition-transform group-hover:scale-105"
                     />
-                    {isOutOfStock && (
+                    {showSoldOut && (
                         <div className="absolute inset-0 flex items-center justify-center bg-black/60">
                             <span className="text-xl font-semibold text-white">
                                 Sold Out
@@ -59,7 +60,7 @@ export function DropCard({
                     )}
                 </div>
             </CardHeader>
-            <CardContent className="p-5">
+            <CardContent className="p-5 flex flex-col flex-1">
                 <div className="flex items-start justify-between gap-2">
                     <div className="flex-1">
                         <p className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
@@ -70,51 +71,59 @@ export function DropCard({
                         </CardTitle>
                     </div>
                 </div>
-                <div className="mt-4 flex items-center gap-2">
-                    <Badge
-                        variant="outline"
-                        className="text-sm px-2.5 py-0.5 border-primary text-primary font-semibold"
-                    >
-                        ${drop.retailPrice}
-                    </Badge>
-                    <Badge
-                        variant={isLowStock ? "destructive" : "secondary"}
-                        className="text-sm px-2.5 py-0.5"
-                    >
-                        {isOutOfStock
-                            ? "Out of Stock"
-                            : `${drop.availableStock} available`}
-                    </Badge>
-                    {drop.soldStock > 0 && (
+                <div className="flex-1">
+                    <div className="mt-4 flex items-center gap-2">
                         <Badge
                             variant="outline"
+                            className="text-sm px-2.5 py-0.5 border-primary text-primary font-semibold"
+                        >
+                            ${drop.retailPrice}
+                        </Badge>
+                        <Badge
+                            variant={isLowStock ? "destructive" : "secondary"}
                             className="text-sm px-2.5 py-0.5"
                         >
-                            {drop.soldStock} sold
+                            {showSoldOut
+                                ? "Out of Stock"
+                                : `${drop.availableStock} available`}
                         </Badge>
+                        {drop.soldStock > 0 && (
+                            <Badge
+                                variant="outline"
+                                className="text-sm px-2.5 py-0.5"
+                            >
+                                {drop.soldStock} sold
+                            </Badge>
+                        )}
+                    </div>
+                    {drop.purchases.length > 0 ? (
+                        <div className="mt-4">
+                            <p className="text-sm font-medium text-muted-foreground mb-1.5">
+                                Purchased by
+                            </p>
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                                {drop.purchases.map((p) => (
+                                    <Badge
+                                        key={p.id}
+                                        variant="outline"
+                                        className="text-sm font-normal"
+                                    >
+                                        {p.user.username}
+                                    </Badge>
+                                ))}
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="mt-4">
+                            <p className="text-sm font-medium text-muted-foreground mb-1.5">
+                                Be the first to purchase!
+                            </p>
+                        </div>
                     )}
                 </div>
-                {drop.purchases.length > 0 && (
-                    <div className="mt-4">
-                        <p className="text-sm font-medium text-muted-foreground mb-1.5">
-                            Purchased by
-                        </p>
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                            {drop.purchases.map((p) => (
-                                <Badge
-                                    key={p.id}
-                                    variant="outline"
-                                    className="text-sm font-normal"
-                                >
-                                    {p.user.username}
-                                </Badge>
-                            ))}
-                        </div>
-                    </div>
-                )}
                 <Button
                     onClick={hasReserved ? handlePurchase : handleReserve}
-                    disabled={isOutOfStock || isPending}
+                    disabled={showSoldOut || isPending}
                     className="w-full mt-4 text-base cursor-pointer"
                     size="default"
                 >
@@ -123,7 +132,7 @@ export function DropCard({
                             <Spinner />
                             Processing...
                         </span>
-                    ) : isOutOfStock ? (
+                    ) : showSoldOut ? (
                         "Sold Out"
                     ) : hasReserved ? (
                         "Complete Purchase"
