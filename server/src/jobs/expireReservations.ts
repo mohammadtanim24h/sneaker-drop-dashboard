@@ -4,6 +4,8 @@ import { io } from "../server.js";
 export function startExpiryJob() {
     let isRunning = false;
 
+    console.log("[ExpiryJob] Starting expiry job (runs every 5 seconds)");
+
     setInterval(async () => {
         if (isRunning) {
             return;
@@ -19,9 +21,14 @@ export function startExpiryJob() {
                 },
             });
 
+            if (expired.length > 0) {
+                console.log(`[ExpiryJob] Found ${expired.length} expired reservation(s)`);
+            }
+
             const affectedDropIds = new Set<string>();
 
             for (const r of expired) {
+                console.log(`[ExpiryJob] Expiring reservation ${r.id} for drop ${r.dropId}`);
                 await prisma.$transaction(async (tx) => {
                     await tx.reservation.update({
                         where: { id: r.id },
@@ -37,10 +44,12 @@ export function startExpiryJob() {
                     });
                 });
 
+                console.log(`[ExpiryJob] Successfully expired reservation ${r.id} and restored stock for drop ${r.dropId}`);
                 affectedDropIds.add(r.dropId);
             }
 
             if (affectedDropIds.size > 0) {
+                console.log(`[ExpiryJob] Fetching updates for ${affectedDropIds.size} affected drop(s)`);
                 const updatedDrops = await prisma.drop.findMany({
                     where: { id: { in: Array.from(affectedDropIds) } },
                     select: {
@@ -62,7 +71,10 @@ export function startExpiryJob() {
                 });
 
                 io.emit("drops:update", updatedDrops);
+                console.log(`[ExpiryJob] Emitted socket update for ${updatedDrops.length} drop(s)`);
             }
+        } catch (error) {
+            console.error("[ExpiryJob] Error processing expired reservations:", error);
         } finally {
             isRunning = false;
         }

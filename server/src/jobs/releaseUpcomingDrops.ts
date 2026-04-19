@@ -4,6 +4,8 @@ import { io } from "../server.js";
 export function startReleaseDropsJob() {
     let isRunning = false;
 
+    console.log("[ReleaseDrops] Starting release drops job (runs every 5 seconds)");
+
     setInterval(async () => {
         if (isRunning) {
             return;
@@ -28,6 +30,10 @@ export function startReleaseDropsJob() {
                 },
             });
 
+            if (upcomingDrops.length > 0) {
+                console.log(`[ReleaseDrops] Found ${upcomingDrops.length} drop(s) ready to release`);
+            }
+
             for (const drop of upcomingDrops) {
                 const updated = await prisma.drop.update({
                     where: { id: drop.id },
@@ -48,11 +54,14 @@ export function startReleaseDropsJob() {
                 });
 
                 console.log(
-                    `[releaseDrops] Drop ${drop.id} (${drop.sneaker.name} ${drop.sneaker.brand}) is now LIVE`,
+                    `[ReleaseDrops] Drop ${drop.id} (${drop.sneaker.name} ${drop.sneaker.brand}) is now LIVE`,
                 );
 
                 io.emit("drop:update", updated);
+                console.log(`[ReleaseDrops] Emitted socket update for drop ${drop.id}`);
             }
+        } catch (error) {
+            console.error("[ReleaseDrops] Error releasing drops:", error);
         } finally {
             isRunning = false;
         }
