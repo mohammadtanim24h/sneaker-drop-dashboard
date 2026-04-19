@@ -56,33 +56,99 @@ export const getActiveDrops = async (_req: Request, res: Response) => {
 
 /**
  * Create a new drop
+ *
+ * Request body options:
+ * 1. Create with existing sneaker: { sneakerId, stock, price, releaseAt? }
+ * 2. Create with new sneaker: { name, brand, imageUrl?, stock, price, releaseAt? }
  */
 export const createDrop = async (req: Request, res: Response) => {
-    const { name, brand, stock, price } = req.body as {
-        name: string;
-        brand: string;
+    const {
+        sneakerId,
+        name,
+        brand,
+        imageUrl,
+        stock,
+        price,
+        releaseAt,
+    } = req.body as {
+        sneakerId?: string;
+        name?: string;
+        brand?: string;
+        imageUrl?: string;
         stock: number;
         price: number;
+        releaseAt?: string | Date;
     };
 
-    console.log(`[createDrop] Creating drop for sneaker: ${name} (${brand})`);
+    // Validate stock and price
+    if (stock <= 0) {
+        return res.status(400).json({ message: "Stock must be greater than 0" });
+    }
+    if (price <= 0) {
+        return res.status(400).json({ message: "Price must be greater than 0" });
+    }
 
-    // Create sneaker record first
-    const sneaker = await prisma.sneaker.create({ data: { name, brand } });
+    // Determine if using existing sneaker or creating new one
+    const isUsingExistingSneaker = !!sneakerId;
 
-    // Create the drop with initial stock values
+    if (isUsingExistingSneaker) {
+        // Validate existing sneaker exists
+        const existingSneaker = await prisma.sneaker.findUnique({
+            where: { id: sneakerId },
+        });
+
+        if (!existingSneaker) {
+            return res.status(404).json({ message: "Sneaker not found" });
+        }
+
+        console.log(
+            `[createDrop] Creating drop for existing sneaker: ${existingSneaker.name} (${existingSneaker.brand})`,
+        );
+    } else {
+        // Validate new sneaker details
+        if (!name || !brand) {
+            return res
+                .status(400)
+                .json({ message: "Name and brand are required when not providing sneakerId" });
+        }
+
+        console.log(`[createDrop] Creating drop for new sneaker: ${name} (${brand})`);
+    }
+
+    // Parse release time - default to now if not provided
+    const releaseTime = releaseAt ? new Date(releaseAt) : new Date();
+
+    // Determine status based on release time
+    const status: "UPCOMING" | "LIVE" =
+        releaseTime > new Date() ? "UPCOMING" : "LIVE";
+
+    // Create sneaker first if not using existing one
+    let finalSneakerId = sneakerId!;
+
+    if (!isUsingExistingSneaker) {
+        const newSneaker = await prisma.sneaker.create({
+            data: { name: name!, brand: brand!, imageUrl },
+        });
+        finalSneakerId = newSneaker.id;
+    }
+
     const drop = await prisma.drop.create({
         data: {
-            sneakerId: sneaker.id,
+            sneakerId: finalSneakerId,
             totalStock: stock,
             availableStock: stock,
             retailPrice: price,
-            releaseAt: new Date(),
-            status: "LIVE",
+            releaseAt: releaseTime,
+            status,
+        },
+        include: {
+            sneaker: true,
         },
     });
 
-    console.log(`[createDrop] Drop created successfully with ID: ${drop.id}`);
+    console.log(
+        `[createDrop] Drop created successfully with ID: ${drop.id} (status: ${status})`,
+    );
     res.json(drop);
 };
 

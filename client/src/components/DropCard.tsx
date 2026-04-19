@@ -12,11 +12,18 @@ interface DropCardProps {
     currentUserId: string | null;
 }
 
-export function DropCard({ drop, onReserve, onPurchase, currentUserId }: DropCardProps) {
+export function DropCard({
+    drop,
+    onReserve,
+    onPurchase,
+    currentUserId,
+}: DropCardProps) {
     const [isPending, startTransition] = useTransition();
     const isLowStock = drop.availableStock <= 5;
     const isOutOfStock = drop.availableStock === 0;
-    const hasReserved = currentUserId && (drop.reservations ?? []).some((r) => r.user.id === currentUserId);
+    const hasReserved =
+        currentUserId &&
+        (drop.reservations ?? []).some((r) => r.user.id === currentUserId);
 
     const handleReserve = () => {
         startTransition(async () => {
@@ -64,6 +71,12 @@ export function DropCard({ drop, onReserve, onPurchase, currentUserId }: DropCar
                     </div>
                 </div>
                 <div className="mt-4 flex items-center gap-2">
+                    <Badge
+                        variant="outline"
+                        className="text-sm px-2.5 py-0.5 border-primary text-primary font-semibold"
+                    >
+                        ${drop.retailPrice}
+                    </Badge>
                     <Badge
                         variant={isLowStock ? "destructive" : "secondary"}
                         className="text-sm px-2.5 py-0.5"
@@ -113,7 +126,7 @@ export function DropCard({ drop, onReserve, onPurchase, currentUserId }: DropCar
                     ) : isOutOfStock ? (
                         "Sold Out"
                     ) : hasReserved ? (
-                        "Purchase"
+                        "Complete Purchase"
                     ) : (
                         "Reserve Now"
                     )}

@@ -18,6 +18,7 @@ export interface Drop {
     id: string;
     availableStock: number;
     soldStock: number;
+    retailPrice: number;
     sneaker: Sneaker;
     purchases: Purchase[];
     reservations: Reservation[];
