@@ -2,18 +2,9 @@ import { prisma } from "../lib/prisma.js";
 import { io } from "../server.js";
 
 export function startReleaseDropsJob() {
-    let isRunning = false;
-
-    console.log("[ReleaseDrops] Starting release drops job (runs every 5 seconds)");
-
-    setInterval(async () => {
-        if (isRunning) {
-            return;
-        }
-
-        isRunning = true;
-
+    const run = async () => {
         try {
+            console.log("[ReleaseDrops] Checking for drops to release...");
             const upcomingDrops = await prisma.drop.findMany({
                 where: {
                     status: "UPCOMING",
@@ -63,7 +54,10 @@ export function startReleaseDropsJob() {
         } catch (error) {
             console.error("[ReleaseDrops] Error releasing drops:", error);
         } finally {
-            isRunning = false;
+            setTimeout(run, 5000);
         }
-    }, 5000);
+    };
+
+    console.log("[ReleaseDrops] Starting release drops job (runs every 5 seconds)");
+    run();
 }

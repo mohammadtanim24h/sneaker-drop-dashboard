@@ -2,18 +2,9 @@ import { prisma } from "../lib/prisma.js";
 import { io } from "../server.js";
 
 export function startExpiryJob() {
-    let isRunning = false;
-
-    console.log("[ExpiryJob] Starting expiry job (runs every 5 seconds)");
-
-    setInterval(async () => {
-        if (isRunning) {
-            return;
-        }
-
-        isRunning = true;
-
+    const run = async () => {
         try {
+            console.log("[ExpiryJob] Checking for expired reservations...");
             const expired = await prisma.reservation.findMany({
                 where: {
                     status: "ACTIVE",
@@ -76,7 +67,10 @@ export function startExpiryJob() {
         } catch (error) {
             console.error("[ExpiryJob] Error processing expired reservations:", error);
         } finally {
-            isRunning = false;
+            setTimeout(run, 5000);
         }
-    }, 5000);
+    };
+
+    console.log("[ExpiryJob] Starting expiry job (runs every 5 seconds)");
+    run();
 }
