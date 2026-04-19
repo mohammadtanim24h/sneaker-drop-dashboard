@@ -91,6 +91,7 @@ export default function App() {
 
         return () => {
             socket.off("drop:update");
+            socket.off("drops:update");
         };
     }, [qc]);
 
